@@ -398,13 +398,14 @@ function EMRChart() {
   const pushMultiline = (lines, prefix, content, protect = false) => {
     if (!content) return;
     const contentLines = content.split('\n');
+    const indentSpaces = '\u00A0'.repeat(visualWidth(prefix));
     contentLines.forEach((cl, i) => {
       const processedLine = protect ? protectSpaces(cl) : cl;
       if (i === 0) {
-        lines.push({ text: prefix + processedLine, hangingPrefix: prefix });
+        lines.push({ text: prefix + processedLine });
       } else {
-        // 사용자 엔터 줄도 prefix 위치에 맞춰 들여쓰기
-        lines.push({ text: processedLine, hangingPrefix: prefix, hidePrefix: true });
+        // 공백을 prefix 폭만큼 직접 박아서 정렬
+        lines.push({ text: indentSpaces + processedLine, isContinuation: true });
       }
     });
   };
@@ -699,11 +700,8 @@ function EMRChart() {
     const lineObjs = generateLines();
     const p = chart.patientInfo;
     const lines = lineObjs.map(l => {
-      const prefix = l.hangingPrefix || '';
-      const indentCh = visualWidth(prefix);
-      const escaped = (l.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;') || '&nbsp;';
-      const textIndent = l.hidePrefix ? '0' : `-${indentCh}ch`;
-      return `<div style="padding-left:${indentCh}ch;text-indent:${textIndent};">${escaped}</div>`;
+      const escaped = (l.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\u00A0/g, '&nbsp;') || '&nbsp;';
+      return `<div>${escaped}</div>`;
     }).join('');
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>병록지</title>
@@ -738,11 +736,8 @@ function EMRChart() {
     const lineObjs = generateLines();
     const p = chart.patientInfo;
     const lines = lineObjs.map(l => {
-      const prefix = l.hangingPrefix || '';
-      const indentCh = visualWidth(prefix);
-      const escaped = (l.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;') || '&nbsp;';
-      const textIndent = l.hidePrefix ? '0' : `-${indentCh}ch`;
-      return `<div style="padding-left:${indentCh}ch;text-indent:${textIndent};">${escaped}</div>`;
+      const escaped = (l.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\u00A0/g, '&nbsp;') || '&nbsp;';
+      return `<div>${escaped}</div>`;
     }).join('');
 
     const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -1146,22 +1141,16 @@ function EMRChart() {
             {(() => {
               const lineObjs = generateLines();
               if (lineObjs.length === 0) return <span className="text-slate-400">작성 내용이 여기에 표시됩니다.</span>;
-              return lineObjs.map((l, i) => {
-                const prefix = l.hangingPrefix || '';
-                const indentCh = visualWidth(prefix);
-                return (
-                  <div key={i} style={{
-                    paddingLeft: `${indentCh}ch`,
-                    textIndent: l.hidePrefix ? '0' : `-${indentCh}ch`,
-                    minHeight: '1.625em',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'keep-all',
-                    overflowWrap: 'normal',
-                  }}>
-                    {l.text || '\u00A0'}
-                  </div>
-                );
-              });
+              return lineObjs.map((l, i) => (
+                <div key={i} style={{
+                  minHeight: '1.625em',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'keep-all',
+                  overflowWrap: 'normal',
+                }}>
+                  {l.text || '\u00A0'}
+                </div>
+              ));
             })()}
           </div>
         </div>
