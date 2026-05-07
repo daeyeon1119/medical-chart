@@ -684,26 +684,42 @@ function EMRChart() {
 
         <div className="bg-white rounded shadow-sm border border-slate-200 mb-4 p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { field: 'name', label: '성명', type: 'text' },
-              { field: 'age', label: '나이', type: 'text' },
-              { field: 'chartNo', label: '등록번호', type: 'text' },
-              { field: 'ward', label: '병동', type: 'text' },
-              { field: 'date', label: '작성일', type: 'date' },
-            ].map(({ field, label, type }) => (
-              <div key={field}>
-                <label className="text-xs text-slate-500 font-medium">{label}</label>
-                <input type={type} value={chart.patientInfo[field]}
-                  onChange={e => updatePatientInfo(field, e.target.value)}
-                  className="w-full mt-0.5 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-teal-600" />
-              </div>
-            ))}
+            <div>
+              <label className="text-xs text-slate-500 font-medium">성명</label>
+              <input type="text" value={chart.patientInfo.name}
+                onChange={e => updatePatientInfo('name', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-teal-600" />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 font-medium">나이</label>
+              <input type="text" value={chart.patientInfo.age}
+                onChange={e => updatePatientInfo('age', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-teal-600" />
+            </div>
             <div>
               <label className="text-xs text-slate-500 font-medium">성별</label>
               <select value={chart.patientInfo.sex} onChange={e => updatePatientInfo('sex', e.target.value)}
                 className="w-full mt-0.5 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-teal-600 bg-white">
                 <option value="">-</option><option value="M">M</option><option value="F">F</option>
               </select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 font-medium">등록번호</label>
+              <input type="text" value={chart.patientInfo.chartNo}
+                onChange={e => updatePatientInfo('chartNo', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-teal-600" />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 font-medium">병동</label>
+              <input type="text" value={chart.patientInfo.ward}
+                onChange={e => updatePatientInfo('ward', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-teal-600" />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 font-medium">작성일</label>
+              <input type="date" value={chart.patientInfo.date}
+                onChange={e => updatePatientInfo('date', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-teal-600" />
             </div>
           </div>
         </div>
