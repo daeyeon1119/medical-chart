@@ -381,10 +381,24 @@ function EMRChart() {
     return s.replace(/, /g, MARKER).replace(/ /g, '\u00A0').replace(new RegExp(MARKER, 'g'), ', ');
   };
 
+  // monospace에서 글자 시각적 폭 계산 (CJK는 2배)
+  const visualWidth = (s) => {
+    let w = 0;
+    for (const ch of s) {
+      // CJK Unified Ideographs, Hangul, Hiragana, Katakana 등
+      if (/[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch)) {
+        w += 2;
+      } else {
+        w += 1;
+      }
+    }
+    return w;
+  };
+
   const pushMultiline = (lines, prefix, content, protect = false) => {
     if (!content) return;
     const contentLines = content.split('\n');
-    const prefixIndent = prefix.length;
+    const prefixIndent = visualWidth(prefix);
     contentLines.forEach((cl, i) => {
       const processedLine = protect ? protectSpaces(cl) : cl;
       if (i === 0) {
@@ -504,7 +518,7 @@ function EMRChart() {
     const peEntries = Object.entries(chart.pe).filter(([_, v]) => v.trim());
     if (peEntries.length > 0) {
       push('PE)');
-      peEntries.forEach(([k, v]) => pushMultiline(lines, `  - ${k}: `, v, true));
+      peEntries.forEach(([k, v]) => pushMultiline(lines, `  - ${k}: `, v));
       push('');
     }
     if (chart.assessment) {
