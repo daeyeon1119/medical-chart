@@ -395,26 +395,16 @@ function EMRChart() {
     return w;
   };
 
-  const pushMultiline = (lines, prefix, content, protect = false) => {
+  const pushMultiline = (lines, prefix, content) => {
     if (!content) return;
-    const contentLines = content.split('\n');
-    const indentSpaces = '\u00A0'.repeat(visualWidth(prefix));
-    contentLines.forEach((cl, i) => {
-      const processedLine = protect ? protectSpaces(cl) : cl;
-      if (i === 0) {
-        lines.push({ text: prefix + processedLine });
-      } else {
-        // 공백을 prefix 폭만큼 직접 박아서 정렬
-        lines.push({ text: indentSpaces + processedLine, isContinuation: true });
-      }
-    });
+    lines.push(prefix + content);
   };
 
-  // generateText: 라인 객체 배열 반환 [{text, indent, virtualPrefix?}]
+  // generateLines: string 배열 반환
   const generateLines = () => {
     const p = chart.patientInfo;
     const lines = [];
-    const push = (text, indent = 0) => lines.push({ text, indent });
+    const push = (text) => lines.push(text);
 
     if (p.name || p.age || p.sex || p.chartNo) {
       push(`[Patient] ${p.name || '-'} / ${p.age || '-'}/${p.sex || '-'} / Chart No. ${p.chartNo || '-'}`);
@@ -537,12 +527,11 @@ function EMRChart() {
 
   // 텍스트 출력 (복사용) - 줄바꿈만 유지, indent는 추가하지 않음
   const generateText = () => {
-    return generateLines().map(l => l.text).join('\n');
+    return generateLines().join('\n');
   };
 
   const handleCopy = async () => {
-    // EMR 붙여넣기용: nbsp를 일반 공백으로 변환
-    const text = generateText().replace(/\u00A0/g, ' ');
+    const text = generateText();
     try {
       await navigator.clipboard.writeText(text);
       showToast('복사 완료');
@@ -697,12 +686,8 @@ function EMRChart() {
   };
 
   const handlePDF = () => {
-    const lineObjs = generateLines();
-    const p = chart.patientInfo;
-    const lines = lineObjs.map(l => {
-      const escaped = (l.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\u00A0/g, '&nbsp;') || '&nbsp;';
-      return `<div>${escaped}</div>`;
-    }).join('');
+    const text = generateText();
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>병록지</title>
       <style>
@@ -723,9 +708,17 @@ function EMRChart() {
           margin: 0 0 16px 0;
           font-weight: 600;
         }
-        .body div { white-space: pre-wrap; word-break: keep-all; overflow-wrap: normal; }
+        pre {
+          white-space: pre-wrap;
+          word-break: keep-all;
+          overflow-wrap: normal;
+          font-family: inherit;
+          font-size: inherit;
+          line-height: inherit;
+          margin: 0;
+        }
       </style></head>
-      <body><h1>병록지 (Medical Record)</h1><div class="body">${lines}</div></body></html>`;
+      <body><h1>병록지 (Medical Record)</h1><pre>${escaped}</pre></body></html>`;
     const w = window.open('', '_blank');
     w.document.write(html);
     w.document.close();
@@ -733,12 +726,9 @@ function EMRChart() {
   };
 
   const handleWord = () => {
-    const lineObjs = generateLines();
+    const text = generateText();
     const p = chart.patientInfo;
-    const lines = lineObjs.map(l => {
-      const escaped = (l.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\u00A0/g, '&nbsp;') || '&nbsp;';
-      return `<div>${escaped}</div>`;
-    }).join('');
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
     const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'>
@@ -756,10 +746,16 @@ function EMRChart() {
           padding-bottom: 6px;
           font-weight: 600;
         }
+        pre {
+          white-space: pre-wrap;
+          word-break: keep-all;
+          font-family: inherit;
+          font-size: inherit;
+        }
       </style>
       </head><body>
       <h1>병록지 (Medical Record)</h1>
-      ${lines}
+      <pre>${escaped}</pre>
       </body></html>`;
     const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
@@ -1137,22 +1133,9 @@ function EMRChart() {
               </button>
             </div>
           </div>
-          <div className="p-4 text-sm text-slate-800 font-mono leading-relaxed bg-slate-50/30 max-h-96 overflow-y-auto">
-            {(() => {
-              const lineObjs = generateLines();
-              if (lineObjs.length === 0) return <span className="text-slate-400">작성 내용이 여기에 표시됩니다.</span>;
-              return lineObjs.map((l, i) => (
-                <div key={i} style={{
-                  minHeight: '1.625em',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'keep-all',
-                  overflowWrap: 'normal',
-                }}>
-                  {l.text || '\u00A0'}
-                </div>
-              ));
-            })()}
-          </div>
+          <pre className="p-4 text-sm text-slate-800 font-mono leading-relaxed bg-slate-50/30 max-h-96 overflow-y-auto whitespace-pre-wrap" style={{wordBreak: 'keep-all', overflowWrap: 'normal'}}>
+            {generateText() || <span className="text-slate-400">작성 내용이 여기에 표시됩니다.</span>}
+          </pre>
         </div>
 
         <div className="text-center text-xs text-slate-400 mt-6 pb-4">
