@@ -402,12 +402,9 @@ function EMRChart() {
       const processedLine = protect ? protectSpaces(cl) : cl;
       if (i === 0) {
         lines.push({ text: prefix + processedLine, hangingPrefix: prefix });
-      } else if (protect) {
-        // 체크박스 기반: 사용자 엔터도 들여쓰기
-        lines.push({ text: processedLine, hangingPrefix: prefix, hidePrefix: true });
       } else {
-        // 자유 기술: 사용자 엔터는 들여쓰기 없이 맨 왼쪽부터
-        lines.push({ text: processedLine, hangingPrefix: '' });
+        // 사용자 엔터 줄도 prefix 위치에 맞춰 들여쓰기
+        lines.push({ text: processedLine, hangingPrefix: prefix, hidePrefix: true });
       }
     });
   };
