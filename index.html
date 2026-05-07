@@ -408,8 +408,10 @@ function EMRChart() {
     const condStr = chart.pmhx.conditions
       .filter(c => c.status === '+' || c.status === '-')
       .map(c => {
-        const base = `${c.name}(${c.status})`;
-        return c.note ? `${base} ${c.note}` : base;
+        const name = c.name.replace(/ /g, '\u00A0');
+        const note = c.note ? c.note.replace(/ /g, '\u00A0') : '';
+        const base = `${name}(${c.status})`;
+        return note ? `${base}\u00A0${note}` : base;
       })
       .join(', ');
     const hasCondOrHistory = !!(condStr || chart.pmhx.history);
@@ -428,16 +430,17 @@ function EMRChart() {
     // SHx
     const shxParts = [];
     const smk = chart.shx.smoking;
+    const nbsp = '\u00A0';
     if (smk.status === '+') {
       let s = `Smoking(+)`;
-      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ');
-      if (detail) s += ` ${detail}`;
+      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
+      if (detail) s += nbsp + detail;
       shxParts.push(s);
     } else if (smk.status === 'ex') {
       let s = `Smoking(ex-smoker)`;
-      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ');
-      if (detail) s += ` ${detail}`;
-      if (smk.quitYears) s += `, quit ${smk.quitYears} years ago`;
+      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
+      if (detail) s += nbsp + detail;
+      if (smk.quitYears) s += `, quit${nbsp}${smk.quitYears}${nbsp}years${nbsp}ago`;
       shxParts.push(s);
     } else {
       shxParts.push('Smoking(-)');
@@ -445,14 +448,14 @@ function EMRChart() {
     const alc = chart.shx.alcohol;
     if (alc.status === '+') {
       let s = `Alcohol(+)`;
-      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ');
-      if (detail) s += ` ${detail}`;
+      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
+      if (detail) s += nbsp + detail;
       shxParts.push(s);
     } else if (alc.status === 'ex') {
       let s = `Alcohol(ex-drinker)`;
-      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ');
-      if (detail) s += ` ${detail}`;
-      if (alc.quitYears) s += `, quit ${alc.quitYears} years ago`;
+      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
+      if (detail) s += nbsp + detail;
+      if (alc.quitYears) s += `, quit${nbsp}${alc.quitYears}${nbsp}years${nbsp}ago`;
       shxParts.push(s);
     } else {
       shxParts.push('Alcohol(-)');
@@ -466,8 +469,10 @@ function EMRChart() {
     const fhxCondStr = chart.fhx.conditions
       .filter(c => c.status === '+' || c.status === '-')
       .map(c => {
-        const base = `${c.name}(${c.status})`;
-        return c.note ? `${base} ${c.note}` : base;
+        const name = c.name.replace(/ /g, '\u00A0');
+        const note = c.note ? c.note.replace(/ /g, '\u00A0') : '';
+        const base = `${name}(${c.status})`;
+        return note ? `${base}\u00A0${note}` : base;
       })
       .join(', ');
     if (fhxCondStr || chart.fhx.other) {
@@ -482,7 +487,7 @@ function EMRChart() {
       if (!Array.isArray(symptoms) || symptoms.length === 0) return;
       const str = symptoms
         .filter(s => s.status === '+' || s.status === '-')
-        .map(s => `${s.name}(${s.status})`)
+        .map(s => `${s.name.replace(/ /g, '\u00A0')}(${s.status})`)
         .join(', ');
       if (str) rosLineObjs.push({ prefix: `  - ${system}: `, content: str });
     });
@@ -518,7 +523,8 @@ function EMRChart() {
   };
 
   const handleCopy = async () => {
-    const text = generateText();
+    // EMR 붙여넣기용: nbsp를 일반 공백으로 변환
+    const text = generateText().replace(/\u00A0/g, ' ');
     try {
       await navigator.clipboard.writeText(text);
       showToast('복사 완료');
