@@ -702,7 +702,7 @@ function EMRChart() {
           margin: 0 0 16px 0;
           font-weight: 600;
         }
-        .body div { white-space: pre-wrap; word-wrap: break-word; }
+        .body div { white-space: pre-wrap; word-break: keep-all; overflow-wrap: normal; }
       </style></head>
       <body><h1>병록지 (Medical Record)</h1><div class="body">${lines}</div></body></html>`;
     const w = window.open('', '_blank');
@@ -1132,7 +1132,8 @@ function EMRChart() {
                     textIndent: isVirtualContinuation ? '0' : `-${indentEm}em`,
                     minHeight: '1.625em',
                     whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
+                    wordBreak: 'keep-all',
+                    overflowWrap: 'normal',
                   }}>
                     {l.text || '\u00A0'}
                   </div>
