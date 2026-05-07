@@ -374,15 +374,23 @@ function EMRChart() {
   // 멀티라인 텍스트를 prefix와 함께 라인 배열에 추가
   // 첫 줄: prefix + 첫 줄
   // 둘째 줄부터: prefix 없이, indent는 prefix 길이만큼
-  const pushMultiline = (lines, prefix, content) => {
+  // protect=true: 콤마 외 공백을 nbsp로 보호 (체크박스 기반 항목용)
+  // protect=false: 자연 공백 유지 (한국어 자유 기술용)
+  const protectSpaces = (s) => {
+    const MARKER = '\u0001';
+    return s.replace(/, /g, MARKER).replace(/ /g, '\u00A0').replace(new RegExp(MARKER, 'g'), ', ');
+  };
+
+  const pushMultiline = (lines, prefix, content, protect = false) => {
     if (!content) return;
     const contentLines = content.split('\n');
     const prefixIndent = prefix.length;
     contentLines.forEach((cl, i) => {
+      const processedLine = protect ? protectSpaces(cl) : cl;
       if (i === 0) {
-        lines.push({ text: prefix + cl, indent: prefixIndent });
+        lines.push({ text: prefix + processedLine, indent: prefixIndent });
       } else {
-        lines.push({ text: cl, indent: prefixIndent, virtualPrefix: prefixIndent });
+        lines.push({ text: processedLine, indent: prefixIndent, virtualPrefix: prefixIndent });
       }
     });
   };
@@ -408,10 +416,8 @@ function EMRChart() {
     const condStr = chart.pmhx.conditions
       .filter(c => c.status === '+' || c.status === '-')
       .map(c => {
-        const name = c.name.replace(/ /g, '\u00A0');
-        const note = c.note ? c.note.replace(/ /g, '\u00A0') : '';
-        const base = `${name}(${c.status})`;
-        return note ? `${base}\u00A0${note}` : base;
+        const base = `${c.name}(${c.status})`;
+        return c.note ? `${base} ${c.note}` : base;
       })
       .join(', ');
     const hasCondOrHistory = !!(condStr || chart.pmhx.history);
@@ -420,7 +426,7 @@ function EMRChart() {
       push('PMHx)');
       if (hasCondOrHistory) {
         const text = condStr + (condStr && chart.pmhx.history ? ', ' : '') + (chart.pmhx.history || '');
-        pushMultiline(lines, '  - 병력: ', text);
+        pushMultiline(lines, '  - 병력: ', text, true);
       }
       if (chart.pmhx.medication) pushMultiline(lines, '  - 약물력: ', chart.pmhx.medication);
       if (chart.pmhx.surgery) pushMultiline(lines, '  - 수술력: ', chart.pmhx.surgery);
@@ -430,17 +436,16 @@ function EMRChart() {
     // SHx
     const shxParts = [];
     const smk = chart.shx.smoking;
-    const nbsp = '\u00A0';
     if (smk.status === '+') {
       let s = `Smoking(+)`;
-      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
-      if (detail) s += nbsp + detail;
+      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ');
+      if (detail) s += ` ${detail}`;
       shxParts.push(s);
     } else if (smk.status === 'ex') {
       let s = `Smoking(ex-smoker)`;
-      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
-      if (detail) s += nbsp + detail;
-      if (smk.quitYears) s += `, quit${nbsp}${smk.quitYears}${nbsp}years${nbsp}ago`;
+      const detail = [smk.amount, smk.duration].filter(Boolean).join(' x ');
+      if (detail) s += ` ${detail}`;
+      if (smk.quitYears) s += `, quit ${smk.quitYears} years ago`;
       shxParts.push(s);
     } else {
       shxParts.push('Smoking(-)');
@@ -448,36 +453,34 @@ function EMRChart() {
     const alc = chart.shx.alcohol;
     if (alc.status === '+') {
       let s = `Alcohol(+)`;
-      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
-      if (detail) s += nbsp + detail;
+      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ');
+      if (detail) s += ` ${detail}`;
       shxParts.push(s);
     } else if (alc.status === 'ex') {
       let s = `Alcohol(ex-drinker)`;
-      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ').replace(/ /g, nbsp);
-      if (detail) s += nbsp + detail;
-      if (alc.quitYears) s += `, quit${nbsp}${alc.quitYears}${nbsp}years${nbsp}ago`;
+      const detail = [alc.amount, alc.duration].filter(Boolean).join(' x ');
+      if (detail) s += ` ${detail}`;
+      if (alc.quitYears) s += `, quit ${alc.quitYears} years ago`;
       shxParts.push(s);
     } else {
       shxParts.push('Alcohol(-)');
     }
     let shxText = shxParts.join(', ');
     if (chart.shx.other) shxText += (shxText ? ', ' : '') + chart.shx.other;
-    pushMultiline(lines, 'SHx) ', shxText);
+    pushMultiline(lines, 'SHx) ', shxText, true);
     push('');
 
     // FHx
     const fhxCondStr = chart.fhx.conditions
       .filter(c => c.status === '+' || c.status === '-')
       .map(c => {
-        const name = c.name.replace(/ /g, '\u00A0');
-        const note = c.note ? c.note.replace(/ /g, '\u00A0') : '';
-        const base = `${name}(${c.status})`;
-        return note ? `${base}\u00A0${note}` : base;
+        const base = `${c.name}(${c.status})`;
+        return c.note ? `${base} ${c.note}` : base;
       })
       .join(', ');
     if (fhxCondStr || chart.fhx.other) {
       const parts = [fhxCondStr, chart.fhx.other].filter(Boolean).join(', ');
-      pushMultiline(lines, 'FHx) ', parts);
+      pushMultiline(lines, 'FHx) ', parts, true);
       push('');
     }
 
@@ -487,13 +490,13 @@ function EMRChart() {
       if (!Array.isArray(symptoms) || symptoms.length === 0) return;
       const str = symptoms
         .filter(s => s.status === '+' || s.status === '-')
-        .map(s => `${s.name.replace(/ /g, '\u00A0')}(${s.status})`)
+        .map(s => `${s.name}(${s.status})`)
         .join(', ');
       if (str) rosLineObjs.push({ prefix: `  - ${system}: `, content: str });
     });
     if (rosLineObjs.length > 0) {
       push('ROS)');
-      rosLineObjs.forEach(({ prefix, content }) => pushMultiline(lines, prefix, content));
+      rosLineObjs.forEach(({ prefix, content }) => pushMultiline(lines, prefix, content, true));
       push('');
     }
 
@@ -501,7 +504,7 @@ function EMRChart() {
     const peEntries = Object.entries(chart.pe).filter(([_, v]) => v.trim());
     if (peEntries.length > 0) {
       push('PE)');
-      peEntries.forEach(([k, v]) => pushMultiline(lines, `  - ${k}: `, v));
+      peEntries.forEach(([k, v]) => pushMultiline(lines, `  - ${k}: `, v, true));
       push('');
     }
     if (chart.assessment) {

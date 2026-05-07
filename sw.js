@@ -1,4 +1,4 @@
-const CACHE = 'medical-chart-v8';
+const CACHE = 'medical-chart-v10';
 const ASSETS = [
   './',
   './index.html',
